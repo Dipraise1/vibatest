@@ -2,6 +2,8 @@
 
 An [Anchor](https://www.anchor-lang.com/) program for a SOL presale: **anyone can deposit**, but **only a single, immutable authority wallet can withdraw**. Ships with a zero-build single-page dApp for connecting a wallet and depositing.
 
+**🌐 Live dApp:** https://app-alpha-nine-65.vercel.app (currently pointed at devnet)
+
 ## How it works
 
 | Instruction | Caller | Effect |
