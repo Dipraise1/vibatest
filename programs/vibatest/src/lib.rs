@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 
-declare_id!("7foDdocSByHdTZQ4zPogPDCEntvNL42K8xGK9vwEXG6u");
+declare_id!("E27v3ZxxJT7AurfweTryTZFX3SxHvgERk3Rq7X1xVVag");
 
 #[program]
 pub mod vibatest {

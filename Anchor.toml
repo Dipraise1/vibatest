@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-vibatest = "7foDdocSByHdTZQ4zPogPDCEntvNL42K8xGK9vwEXG6u"
+vibatest = "E27v3ZxxJT7AurfweTryTZFX3SxHvgERk3Rq7X1xVVag"
 
 [registry]
 url = "https://api.apr.dev"

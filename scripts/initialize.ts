@@ -15,7 +15,7 @@ import { PublicKey } from "@solana/web3.js";
 
 // >>> The one and only wallet permitted to withdraw <<<
 const WITHDRAW_AUTHORITY = new PublicKey(
-  "4TmEKYig8gDy6mM39fSgYBgRgHvnDZSwBpRL7s7rUDRc"
+  "4z4WNm7VWuGTkTf479o51WRbKD2AEN6ABdsdagcAqbRJ"
 );
 
 async function main() {
