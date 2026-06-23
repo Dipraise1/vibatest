@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>vibatest presale</title>
+<style>
+  :root {
+    --bg: #0a0b0f;
+    --panel: #14161d;
+    --line: #242732;
+    --text: #e7e9ee;
+    --muted: #8b90a0;
+    --accent: #7c5cff;
+    --accent-2: #00d4a0;
+    --danger: #ff5c7c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #1a1530 0%, var(--bg) 55%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%;
+         background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+  h1 { font-size: 20px; font-weight: 650; letter-spacing: .2px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+  .stat-row { display: flex; gap: 12px; margin-bottom: 22px; }
+  .stat {
+    flex: 1; background: #0f1117; border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px;
+  }
+  .stat .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .6px; }
+  .stat .value { font-size: 18px; font-weight: 600; margin-top: 6px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 8px 2px; }
+  .field {
+    display: flex; align-items: center; gap: 10px;
+    background: #0f1117; border: 1px solid var(--line);
+    border-radius: 14px; padding: 4px 4px 4px 16px; margin-bottom: 18px;
+  }
+  .field input {
+    flex: 1; background: transparent; border: 0; outline: 0;
+    color: var(--text); font-size: 22px; font-weight: 600; padding: 12px 0;
+  }
+  .field .unit { color: var(--muted); font-weight: 600; padding-right: 14px; }
+  button {
+    width: 100%; border: 0; border-radius: 14px; padding: 16px;
+    font-size: 15px; font-weight: 650; cursor: pointer;
+    color: #fff; transition: transform .05s ease, opacity .2s ease;
+  }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-connect { background: linear-gradient(135deg, var(--accent), #9d7bff); }
+  .btn-deposit { background: linear-gradient(135deg, var(--accent-2), #2ee6b6); color: #052b22; }
+  .wallet-bar {
+    display: none; align-items: center; justify-content: space-between;
+    background: #0f1117; border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 14px; margin-bottom: 18px; font-size: 13px;
+  }
+  .wallet-bar .addr { font-family: ui-monospace, Menlo, monospace; color: var(--accent-2); }
+  .wallet-bar .disconnect { color: var(--muted); cursor: pointer; font-size: 12px; }
+  .msg { font-size: 13px; margin-top: 16px; min-height: 18px; word-break: break-word; }
+  .msg a { color: var(--accent-2); }
+  .ok { color: var(--accent-2); }
+  .err { color: var(--danger); }
+  .foot { margin-top: 20px; font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .foot code { color: #aab0c0; font-family: ui-monospace, Menlo, monospace; }
+  .quick { display: flex; gap: 8px; margin: -8px 0 18px; }
+  .quick span {
+    flex: 1; text-align: center; font-size: 12px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 10px; padding: 8px; cursor: pointer;
+  }
+  .quick span:hover { border-color: var(--accent); color: var(--text); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand"><span class="dot"></span><h1>vibatest presale</h1></div>
+    <p class="sub">Connect your wallet and deposit SOL into the presale.</p>
+
+    <div class="stat-row">
+      <div class="stat"><div class="label">Total raised</div><div class="value" id="totalRaised">—</div></div>
+      <div class="stat"><div class="label">Network</div><div class="value">Devnet</div></div>
+    </div>
+
+    <div class="wallet-bar" id="walletBar">
+      <span>Connected <span class="addr" id="walletAddr"></span></span>
+      <span class="disconnect" id="disconnectBtn">Disconnect</span>
+    </div>
+
+    <button class="btn-connect" id="connectBtn">Connect Wallet</button>
+
+    <div id="depositArea" style="display:none">
+      <label style="margin-top:18px">Amount to deposit</label>
+      <div class="field">
+        <input id="amount" type="number" min="0" step="0.01" placeholder="0.0" />
+        <span class="unit">SOL</span>
+      </div>
+      <div class="quick">
+        <span data-v="0.1">0.1</span><span data-v="0.5">0.5</span>
+        <span data-v="1">1</span><span data-v="5">5</span>
+      </div>
+      <button class="btn-deposit" id="depositBtn">Deposit SOL</button>
+    </div>
+
+    <div class="msg" id="msg"></div>
+
+    <div class="foot">
+      Program: <code id="progId"></code><br/>
+      Withdrawals are restricted to a single authority wallet hardcoded in the program.
+      Only deposit what you intend to contribute — deposits are non-refundable by the contract.
+    </div>
+  </div>
+
+<script type="module">
+import {
+  Connection, PublicKey, Transaction, TransactionInstruction, SystemProgram
+} from "https://esm.sh/@solana/web3.js@1.95.3";
+
+// ---- Config -------------------------------------------------------------
+const PROGRAM_ID = new PublicKey("7foDdocSByHdTZQ4zPogPDCEntvNL42K8xGK9vwEXG6u");
+// Devnet (where the program is currently deployed). Public devnet RPC is fine
+// for a test dApp; switch to your Helius mainnet endpoint when you go live.
+const RPC_URL = "https://api.devnet.solana.com";
+const CLUSTER = "devnet"; // used for explorer links
+const DEPOSIT_DISCRIMINATOR = new Uint8Array([242,35,198,137,82,225,242,182]);
+const LAMPORTS_PER_SOL = 1_000_000_000;
+// ------------------------------------------------------------------------
+
+const connection = new Connection(RPC_URL, "confirmed");
+const enc = (s) => new TextEncoder().encode(s);
+const [presalePda] = PublicKey.findProgramAddressSync([enc("presale")], PROGRAM_ID);
+const [vaultPda]   = PublicKey.findProgramAddressSync([enc("vault")], PROGRAM_ID);
+
+const $ = (id) => document.getElementById(id);
+$("progId").textContent = PROGRAM_ID.toBase58();
+
+let provider = null;
+let pubkey = null;
+
+function getProvider() {
+  if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
+  if (window.solana?.isPhantom) return window.solana;
+  if (window.solflare?.isSolflare) return window.solflare;
+  if (window.solana) return window.solana;
+  return null;
+}
+
+function setMsg(text, cls = "") { const m = $("msg"); m.className = "msg " + cls; m.innerHTML = text; }
+function short(pk) { const s = pk.toBase58(); return s.slice(0,4) + "…" + s.slice(-4); }
+
+async function refreshStats() {
+  try {
+    const info = await connection.getAccountInfo(presalePda);
+    if (info && info.data.length >= 48) {
+      // layout: 8 disc + 32 authority + 8 total_deposited (u64 LE)
+      const view = new DataView(info.data.buffer, info.data.byteOffset + 40, 8);
+      const lamports = view.getBigUint64(0, true);
+      $("totalRaised").textContent = (Number(lamports) / LAMPORTS_PER_SOL).toFixed(3) + " SOL";
+    } else {
+      $("totalRaised").textContent = "not live yet";
+    }
+  } catch (e) {
+    $("totalRaised").textContent = "—";
+  }
+}
+
+async function connect() {
+  provider = getProvider();
+  if (!provider) {
+    setMsg('No Solana wallet found. Install <a href="https://phantom.app" target="_blank">Phantom</a>.', "err");
+    return;
+  }
+  try {
+    const res = await provider.connect();
+    pubkey = new PublicKey(res.publicKey.toString());
+    $("walletAddr").textContent = short(pubkey);
+    $("walletBar").style.display = "flex";
+    $("connectBtn").style.display = "none";
+    $("depositArea").style.display = "block";
+    setMsg("");
+  } catch (e) {
+    setMsg("Connection rejected.", "err");
+  }
+}
+
+async function disconnect() {
+  try { await provider?.disconnect(); } catch {}
+  pubkey = null;
+  $("walletBar").style.display = "none";
+  $("connectBtn").style.display = "block";
+  $("depositArea").style.display = "none";
+  setMsg("");
+}
+
+function depositIx(lamports) {
+  const data = new Uint8Array(16);
+  data.set(DEPOSIT_DISCRIMINATOR, 0);
+  new DataView(data.buffer).setBigUint64(8, BigInt(lamports), true);
+  return new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      { pubkey: presalePda, isSigner: false, isWritable: true },
+      { pubkey: vaultPda,   isSigner: false, isWritable: true },
+      { pubkey: pubkey,     isSigner: true,  isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data,
+  });
+}
+
+async function deposit() {
+  const sol = parseFloat($("amount").value);
+  if (!sol || sol <= 0) { setMsg("Enter an amount greater than 0.", "err"); return; }
+  const lamports = Math.round(sol * LAMPORTS_PER_SOL);
+
+  $("depositBtn").disabled = true;
+  setMsg("Building transaction…");
+  try {
+    const tx = new Transaction().add(depositIx(lamports));
+    tx.feePayer = pubkey;
+    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+    setMsg("Approve in your wallet…");
+    const { signature } = await provider.signAndSendTransaction(tx);
+
+    setMsg("Confirming…");
+    await connection.confirmTransaction(signature, "confirmed");
+
+    setMsg(`Deposited ${sol} SOL — <a href="https://solscan.io/tx/${signature}?cluster=${CLUSTER}" target="_blank">view tx</a>`, "ok");
+    $("amount").value = "";
+    refreshStats();
+  } catch (e) {
+    console.error(e);
+    setMsg("Failed: " + (e?.message || e), "err");
+  } finally {
+    $("depositBtn").disabled = false;
+  }
+}
+
+$("connectBtn").onclick = connect;
+$("disconnectBtn").onclick = disconnect;
+$("depositBtn").onclick = deposit;
+document.querySelectorAll(".quick span").forEach(el =>
+  el.onclick = () => { $("amount").value = el.dataset.v; });
+
+refreshStats();
+setInterval(refreshStats, 20000);
+</script>
+</body>
+</html>

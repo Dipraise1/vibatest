@@ -1,0 +1,25 @@
+[package]
+name = "vibatest"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+# Pin MSRV so the resolver avoids crates needing edition2024 / rust 1.85+,
+# which platform-tools v1.43 (rust 1.79) cannot parse.
+rust-version = "1.79"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "vibatest"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+
+[dependencies]
+anchor-lang = "0.31.1"
+

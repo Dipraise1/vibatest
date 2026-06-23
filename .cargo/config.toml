@@ -1,0 +1,5 @@
+# Prefer dependency versions whose MSRV is <= our rust-version (1.79).
+# This keeps the graph off crates that require edition2024 / rust 1.85+,
+# which the bundled platform-tools (rust 1.79) cannot build.
+[resolver]
+incompatible-rust-versions = "fallback"
