@@ -118,6 +118,17 @@
       <button class="btn-deposit" id="depositBtn">Buy Presale</button>
     </div>
 
+    <div id="adminArea" style="display:none">
+      <div style="border-top:1px solid var(--line); margin:20px 0 16px;"></div>
+      <label>Withdraw to authority — vault holds <strong id="vaultBal">—</strong></label>
+      <div class="field">
+        <input id="wAmount" type="number" min="0" step="0.01" placeholder="0.0" />
+        <span class="unit">SOL</span>
+      </div>
+      <div class="quick"><span id="wMax">Max</span></div>
+      <button class="btn-connect" id="withdrawBtn">Withdraw</button>
+    </div>
+
     <div class="msg" id="msg"></div>
 
     <div class="foot">
@@ -138,7 +149,8 @@ const PROGRAM_ID = new PublicKey("E27v3ZxxJT7AurfweTryTZFX3SxHvgERk3Rq7X1xVVag")
 // for a test dApp; switch to your Helius mainnet endpoint when you go live.
 const RPC_URL = "https://api.devnet.solana.com";
 const CLUSTER = "devnet"; // used for explorer links
-const DEPOSIT_DISCRIMINATOR = new Uint8Array([242,35,198,137,82,225,242,182]);
+const DEPOSIT_DISCRIMINATOR  = new Uint8Array([242,35,198,137,82,225,242,182]);
+const WITHDRAW_DISCRIMINATOR = new Uint8Array([183,18,70,156,148,109,161,34]);
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // ------------------------------------------------------------------------
 
@@ -152,6 +164,8 @@ $("progId").textContent = PROGRAM_ID.toBase58();
 
 let provider = null;
 let pubkey = null;
+let authority = null;   // the withdrawal authority read from the presale account
+let vaultLamports = 0;
 
 function getProvider() {
   if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
@@ -169,15 +183,25 @@ async function refreshStats() {
     const info = await connection.getAccountInfo(presalePda);
     if (info && info.data.length >= 48) {
       // layout: 8 disc + 32 authority + 8 total_deposited (u64 LE)
+      authority = new PublicKey(info.data.subarray(8, 40));
       const view = new DataView(info.data.buffer, info.data.byteOffset + 40, 8);
       const lamports = view.getBigUint64(0, true);
       $("totalRaised").textContent = (Number(lamports) / LAMPORTS_PER_SOL).toFixed(3) + " SOL";
     } else {
       $("totalRaised").textContent = "not live yet";
     }
+    vaultLamports = await connection.getBalance(vaultPda);
+    $("vaultBal").textContent = (vaultLamports / LAMPORTS_PER_SOL).toFixed(3) + " SOL";
+    maybeShowAdmin();
   } catch (e) {
     $("totalRaised").textContent = "—";
   }
+}
+
+// Reveal the withdraw panel only when the connected wallet IS the authority.
+function maybeShowAdmin() {
+  const isAuth = pubkey && authority && pubkey.equals(authority);
+  $("adminArea").style.display = isAuth ? "block" : "none";
 }
 
 async function connect() {
@@ -194,6 +218,7 @@ async function connect() {
     $("connectBtn").style.display = "none";
     $("depositArea").style.display = "block";
     setMsg("");
+    refreshStats();   // re-evaluate admin panel for this wallet
   } catch (e) {
     setMsg("Connection rejected.", "err");
   }
@@ -205,6 +230,7 @@ async function disconnect() {
   $("walletBar").style.display = "none";
   $("connectBtn").style.display = "block";
   $("depositArea").style.display = "none";
+  $("adminArea").style.display = "none";
   setMsg("");
 }
 
@@ -253,10 +279,61 @@ async function deposit() {
   }
 }
 
+function withdrawIx(lamports) {
+  const data = new Uint8Array(16);
+  data.set(WITHDRAW_DISCRIMINATOR, 0);
+  new DataView(data.buffer).setBigUint64(8, BigInt(lamports), true);
+  return new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      { pubkey: presalePda, isSigner: false, isWritable: false },
+      { pubkey: vaultPda,   isSigner: false, isWritable: true },
+      { pubkey: pubkey,     isSigner: true,  isWritable: true },   // authority signs
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data,
+  });
+}
+
+async function withdraw() {
+  if (!authority || !pubkey.equals(authority)) {
+    setMsg("Only the authority wallet can withdraw.", "err"); return;
+  }
+  const sol = parseFloat($("wAmount").value);
+  if (!sol || sol <= 0) { setMsg("Enter an amount greater than 0.", "err"); return; }
+  const lamports = Math.round(sol * LAMPORTS_PER_SOL);
+  if (lamports > vaultLamports) { setMsg("Amount exceeds the vault balance.", "err"); return; }
+
+  $("withdrawBtn").disabled = true;
+  setMsg("Building withdrawal…");
+  try {
+    const tx = new Transaction().add(withdrawIx(lamports));
+    tx.feePayer = pubkey;
+    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+    setMsg("Approve in your wallet…");
+    const { signature } = await provider.signAndSendTransaction(tx);
+
+    setMsg("Confirming…");
+    await connection.confirmTransaction(signature, "confirmed");
+
+    setMsg(`Withdrew ${sol} SOL — <a href="https://solscan.io/tx/${signature}?cluster=${CLUSTER}" target="_blank">view tx</a>`, "ok");
+    $("wAmount").value = "";
+    refreshStats();
+  } catch (e) {
+    console.error(e);
+    setMsg("Failed: " + (e?.message || e), "err");
+  } finally {
+    $("withdrawBtn").disabled = false;
+  }
+}
+
 $("connectBtn").onclick = connect;
 $("disconnectBtn").onclick = disconnect;
 $("depositBtn").onclick = deposit;
-document.querySelectorAll(".quick span").forEach(el =>
+$("withdrawBtn").onclick = withdraw;
+$("wMax").onclick = () => { $("wAmount").value = (vaultLamports / LAMPORTS_PER_SOL).toFixed(4); };
+document.querySelectorAll("#depositArea .quick span").forEach(el =>
   el.onclick = () => { $("amount").value = el.dataset.v; });
 
 refreshStats();
